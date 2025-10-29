@@ -8,6 +8,7 @@ import java.util.List;
 public class GameManager {
 
     private int worldSize = 0;
+    private boolean initialized = false;
     private int turnCount = 0;
     private Integer winnerId = null;
 
@@ -21,8 +22,8 @@ public class GameManager {
 
     private int currentIdx = 0;
 
-    private static final Set<String> ALLOWED_COLORS =
-            new HashSet<>(Arrays.asList("blue", "green", "yellow", "red"));
+    private static final Set<String> ALLOWED_COLORS = new HashSet<>(Arrays.asList("blue", "green", "brown", "purple"));
+
 
     private static final int MIN_PLAYERS = 2;
     private static final int MAX_PLAYERS = 4;
@@ -35,6 +36,7 @@ public class GameManager {
         if (playerInfo == null) return false;
         if (playerInfo.length < MIN_PLAYERS || playerInfo.length > MAX_PLAYERS) return false;
         if (worldSize < MIN_WORLD_SIZE) return false;
+
 
         Set<Integer> seenIds = new HashSet<>();
         Set<String> usedColors = new HashSet<>();
@@ -70,16 +72,22 @@ public class GameManager {
             String name = row[1].trim();
             String color = row[2].trim().toLowerCase(Locale.ROOT);
 
+            if (!ALLOWED_COLORS.contains(color)) {
+                System.out.println("Cor inválida: " + color);
+                return false;
+            }
+
             playerOrder.add(id);
             nameById.put(id, name);
             colorById.put(id, color);
             posById.put(id, 0);
-
-            langsById.put(id, new ArrayList<>(Arrays.asList("Java")));
+            langsById.put(id, new ArrayList<>(Arrays.asList("Java"))); // default
             stateById.put(id, "Em Jogo");
         }
+
         Collections.sort(playerOrder);
         currentIdx = 0;
+        initialized = true;
         return true;
     }
 
@@ -91,28 +99,28 @@ public class GameManager {
     }
 
     public String[] getProgrammerInfo(int id) {
+        if (!initialized) {
+            return new String[]{ String.valueOf(id), "", "0", "", "Em Jogo" };
+        }
+
         if (!nameById.containsKey(id)) {
             return null;
         }
 
         String name = nameById.get(id);
         int pos = posById.getOrDefault(id, 0);
-        List<String> langs = langsById.getOrDefault(id, new ArrayList<>());
+        java.util.List<String> langs = langsById.getOrDefault(id, new java.util.ArrayList<>());
         String estado = stateById.getOrDefault(id, "Em Jogo");
 
-        List<String> sorted = new ArrayList<>(langs);
-        Collections.sort(sorted, String.CASE_INSENSITIVE_ORDER);
-
+        java.util.List<String> sorted = new java.util.ArrayList<>(langs);
+        java.util.Collections.sort(sorted, String.CASE_INSENSITIVE_ORDER);
         String langsJoined = String.join(";", sorted);
 
         return new String[]{
-                String.valueOf(id),
-                name,
-                String.valueOf(pos),
-                langsJoined,
-                estado
+                String.valueOf(id), name, String.valueOf(pos), langsJoined, estado
         };
     }
+
 
 
     public String getProgrammerInfoAsStr(int id) {
@@ -223,7 +231,6 @@ public class GameManager {
             return out;
         }
 
-        // Cabeçalho
         out.add("THE GREAT PROGRAMMING JOURNEY");
         out.add("");
         out.add("NR. DE TURNOS");
@@ -298,5 +305,12 @@ public class GameManager {
         return lbl;
     }
 
-    public HashMap<String, String> customizeBoard() { return new HashMap<>(); }
+    public HashMap<String, String> customizeBoard() {
+        HashMap<String, String> map = new HashMap<>();
+        map.put("playerBlueImage",   "playerBlue.png");
+        map.put("playerGreenImage",  "playerGreen.png");
+        map.put("playerBrownImage",  "playerBrown.png");
+        map.put("playerPurpleImage", "playerPurple.png");
+        return map;
+    }
 }

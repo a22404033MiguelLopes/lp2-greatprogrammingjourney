@@ -22,16 +22,16 @@ public class TestGameManager {
     @Test
     void rejeitaNumJogadoresForaIntervalo() {
         GameManager gm = new GameManager();
-        assertFalse(gm.createInitialBoard(new String[][]{{"1","A","blue"}}, 6)); // 1 jogador
+        assertFalse(gm.createInitialBoard(new String[][]{{"1","A","blue"}}, 6));
     }
 
     @Test
     void rejeitaIdsRepetidosOuNegativos() {
         GameManager gm = new GameManager();
         assertFalse(gm.createInitialBoard(
-                new String[][]{{"1","A","blue"},{"1","B","green"}}, 6)); // id repetido
+                new String[][]{{"1","A","blue"},{"1","B","green"}}, 6));
         assertFalse(gm.createInitialBoard(
-                new String[][]{{"-3","A","blue"},{"2","B","green"}}, 6)); // id negativo
+                new String[][]{{"-3","A","blue"},{"2","B","green"}}, 6));
     }
 
     @Test
@@ -45,9 +45,9 @@ public class TestGameManager {
     void rejeitaCorInvalidaOuRepetida() {
         GameManager gm = new GameManager();
         assertFalse(gm.createInitialBoard(
-                new String[][]{{"1","A","pink"},{"2","B","green"}}, 6)); // cor inválida
+                new String[][]{{"1","A","pink"},{"2","B","green"}}, 6));
         assertFalse(gm.createInitialBoard(
-                new String[][]{{"1","A","blue"},{"2","B","blue"}}, 6)); // cor repetida
+                new String[][]{{"1","A","blue"},{"2","B","blue"}}, 6));
     }
 
     @Test
