@@ -22,43 +22,15 @@ public class GameManager {
 
     private int currentIdx = 0;
 
-    private static final Set<String> ALLOWED_COLORS = new HashSet<>(Arrays.asList("blue", "green", "brown", "purple"));
-
-
-    private static final int MIN_PLAYERS = 2;
-    private static final int MAX_PLAYERS = 4;
-    private static final int MIN_WORLD_SIZE = 4;
-
     public GameManager() {}
 
 
     public boolean createInitialBoard(String[][] playerInfo, int worldSize) {
-        if (playerInfo == null) return false;
-        if (playerInfo.length < MIN_PLAYERS || playerInfo.length > MAX_PLAYERS) return false;
-        if (worldSize < MIN_WORLD_SIZE) return false;
-
-
-        Set<Integer> seenIds = new HashSet<>();
-        Set<String> usedColors = new HashSet<>();
-
-        for (String[] row : playerInfo) {
-            if (row == null || row.length < 3) return false;
-
-            int id;
-            try {
-                id = Integer.parseInt(row[0]);
-            } catch (NumberFormatException e) {
-                return false;
-            }
-            if (id <= 0) return false;
-            if (!seenIds.add(id)) return false;
-
-            String name = row[1] == null ? "" : row[1].trim();
-            if (name.isEmpty()) return false;
-
-            String color = row[2] == null ? "" : row[2].trim().toLowerCase(Locale.ROOT);
-            if (!ALLOWED_COLORS.contains(color)) return false;
-            if (!usedColors.add(color)) return false;
+        if (playerInfo == null || playerInfo.length < 2 || playerInfo.length > 4) {
+            return false;
+        }
+        if (worldSize < 4) {
+            return false;
         }
 
         this.worldSize = worldSize;
@@ -66,30 +38,72 @@ public class GameManager {
         nameById.clear();
         colorById.clear();
         posById.clear();
+        langsById.clear();
+        stateById.clear();
 
-        for (String[] row : playerInfo) {
-            int id = Integer.parseInt(row[0]);
-            String name = row[1].trim();
-            String color = row[2].trim().toLowerCase(Locale.ROOT);
+        java.util.Set<Integer> usedIds = new java.util.HashSet<>();
+        java.util.Set<String> usedColors = new java.util.HashSet<>();
+        java.util.Set<String> allowed = new java.util.HashSet<>(
+                java.util.Arrays.asList("blue","green","brown","purple")
+        );
 
-            if (!ALLOWED_COLORS.contains(color)) {
-                System.out.println("Cor inválida: " + color);
+        for (int i = 0; i < playerInfo.length; i++) {
+            String[] row = playerInfo[i];
+
+            if (row == null || row.length < 3) {
+                return false;
+            }
+
+            int id;
+            try { id = Integer.parseInt(row[0]); }
+            catch (Exception e) { return false; }
+            if (id <= 0) {  return false; }
+            if (!usedIds.add(id)) {  return false; }
+
+            String name = (row[1] == null) ? "" : row[1].trim();
+            if (name.isEmpty()) { return false; }
+
+            java.util.List<String> langs = new java.util.ArrayList<>();
+            String colorRaw;
+
+            if (row.length >= 4) {
+                String langsRaw = (row[2] == null) ? "" : row[2].trim();
+                if (!langsRaw.isEmpty()) {
+                    String[] parts = langsRaw.split(";");
+                    for (String p : parts) {
+                        String s = p.trim();
+                        if (!s.isEmpty()) langs.add(s);
+                    }
+                }
+                colorRaw = (row[3] == null) ? "" : row[3].trim();
+            } else {
+                colorRaw = (row[2] == null) ? "" : row[2].trim();
+                langs.add("Java");
+            }
+
+            String color = colorRaw.toLowerCase(java.util.Locale.ROOT);
+            if (!allowed.contains(color)) {
+                return false;
+            }
+            if (!usedColors.add(color)) {
                 return false;
             }
 
             playerOrder.add(id);
             nameById.put(id, name);
             colorById.put(id, color);
-            posById.put(id, 0);
-            langsById.put(id, new ArrayList<>(Arrays.asList("Java"))); // default
+            posById.put(id, 1);
+            langsById.put(id, langs.isEmpty() ? new java.util.ArrayList<>(java.util.Arrays.asList("Java")) : langs);
             stateById.put(id, "Em Jogo");
         }
 
-        Collections.sort(playerOrder);
+        java.util.Collections.sort(playerOrder);
         currentIdx = 0;
         initialized = true;
+
         return true;
     }
+
 
     public String getImagePng(int position) {
         if (worldSize <= 0) return null;
@@ -100,26 +114,33 @@ public class GameManager {
 
     public String[] getProgrammerInfo(int id) {
         if (!initialized) {
-            return new String[]{ String.valueOf(id), "", "0", "", "Em Jogo" };
+            return new String[]{ String.valueOf(id), "", "1", "Blue", "Em Jogo" };
         }
-
         if (!nameById.containsKey(id)) {
             return null;
         }
 
         String name = nameById.get(id);
-        int pos = posById.getOrDefault(id, 0);
-        java.util.List<String> langs = langsById.getOrDefault(id, new java.util.ArrayList<>());
-        String estado = stateById.getOrDefault(id, "Em Jogo");
+        int pos = posById.getOrDefault(id, 1);
+        String colorCap = capitalizeFirst(colorById.getOrDefault(id, "blue"));
 
+        java.util.List<String> langs = langsById.getOrDefault(id, new java.util.ArrayList<>());
         java.util.List<String> sorted = new java.util.ArrayList<>(langs);
         java.util.Collections.sort(sorted, String.CASE_INSENSITIVE_ORDER);
         String langsJoined = String.join(";", sorted);
 
+        String state = stateById.getOrDefault(id, "Em Jogo");
+
         return new String[]{
-                String.valueOf(id), name, String.valueOf(pos), langsJoined, estado
+                String.valueOf(id),
+                name,
+                String.valueOf(pos),
+                colorCap,
+                state,
+                langsJoined
         };
     }
+
 
 
 
@@ -231,15 +252,20 @@ public class GameManager {
             return out;
         }
 
-        out.add("THE GREAT PROGRAMMING JOURNEY");
-        out.add("");
+        final String SEP = "────────────────────────────────────────";
+
+        out.add("THE GREAT PROGRAMMING JOURNEY — RESULTADOS");
+        out.add(SEP);
         out.add("NR. DE TURNOS");
         out.add(String.valueOf(turnCount));
         out.add("");
         out.add("VENCEDOR");
-        out.add(nameById.getOrDefault(winnerId, String.valueOf(winnerId)));
+        String vencedorNome = nameById.getOrDefault(winnerId, String.valueOf(winnerId));
+        int vencedorPos = posById.getOrDefault(winnerId, worldSize);
+        out.add("🏆 " + vencedorNome + " — " + vencedorPos);
         out.add("");
         out.add("RESTANTES");
+        out.add(SEP);
 
         ArrayList<Integer> restantes = new ArrayList<>();
         for (Integer id : playerOrder) {
@@ -256,24 +282,27 @@ public class GameManager {
         });
 
         for (Integer id : restantes) {
-            out.add(nameById.getOrDefault(id, String.valueOf(id)));
+            int pos = posById.getOrDefault(id, 0);
+            String nome = nameById.getOrDefault(id, String.valueOf(id));
+            out.add(nome + " " + pos);
         }
 
+        out.add(SEP);
         return out;
     }
 
-    public JPanel getAuthorsPanel() {
 
-        JPanel root = new JPanel();
-        root.setPreferredSize(new Dimension(300, 300));
-        root.setMinimumSize(new Dimension(300, 300));
-        root.setMaximumSize(new Dimension(300, 300));
-        root.setBackground(new Color(245, 245, 245));
-        root.setBorder(BorderFactory.createEmptyBorder(16, 16, 16, 16));
-        root.setLayout(new BorderLayout());
+    public JPanel getAuthorsPanel() {
+        JPanel root = new JPanel(new BorderLayout());
+        root.setPreferredSize(new Dimension(360, 240));
+        root.setBackground(hex("#0B1220"));
+        root.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createMatteBorder(0, 0, 1, 0, hex("#111827")),
+                BorderFactory.createEmptyBorder(16, 16, 16, 16)));
 
         JLabel title = new JLabel("THE GREAT PROGRAMMING JOURNEY", SwingConstants.CENTER);
-        title.setFont(title.getFont().deriveFont(Font.BOLD, 12f));
+        title.setForeground(hex("#FBBF24"));
+        title.setFont(title.getFont().deriveFont(Font.BOLD, 16f));
         title.setBorder(BorderFactory.createEmptyBorder(0, 0, 8, 0));
         root.add(title, BorderLayout.NORTH);
 
@@ -281,22 +310,34 @@ public class GameManager {
         content.setOpaque(false);
         content.setLayout(new BoxLayout(content, BoxLayout.Y_AXIS));
 
-        // TODO: altera para os teus dados reais
-        content.add(makeLine("Número: 20201234  |  Nome: Ana Silva"));
-        content.add(makeLine("Número: 20205678  |  Nome: Bruno Costa"));
-        content.add(Box.createVerticalStrut(8));
-        content.add(makeLine("Turma: LP2-XYZ"));
-        content.add(makeLine("Ano letivo: 2025/26"));
+        content.add(authorLine("Número: 22404033  |  Nome: Miguel Lopes"));
+        content.add(Box.createVerticalStrut(6));
+        content.add(authorLine("Turma: LP2-2D1"));
+        content.add(authorLine("Ano letivo: 2025/26"));
 
         root.add(content, BorderLayout.CENTER);
 
         JLabel footer = new JLabel("Universidade Lusófona", SwingConstants.CENTER);
-        footer.setFont(footer.getFont().deriveFont(Font.PLAIN, 11f));
+        footer.setForeground(hex("#CBD5E1"));
+        footer.setFont(footer.getFont().deriveFont(Font.PLAIN, 12f));
         footer.setBorder(BorderFactory.createEmptyBorder(8, 0, 0, 0));
         root.add(footer, BorderLayout.SOUTH);
 
         return root;
     }
+
+    private JLabel authorLine(String text) {
+        JLabel lbl = new JLabel(text);
+        lbl.setForeground(hex("#E2E8F0"));
+        lbl.setAlignmentX(Component.LEFT_ALIGNMENT);
+        lbl.setFont(lbl.getFont().deriveFont(Font.PLAIN, 13f));
+        return lbl;
+    }
+
+    private static Color hex(String rgb) {
+        return Color.decode(rgb);
+    }
+
 
     private JLabel makeLine(String text) {
         JLabel lbl = new JLabel(text);
@@ -306,11 +347,25 @@ public class GameManager {
     }
 
     public HashMap<String, String> customizeBoard() {
-        HashMap<String, String> map = new HashMap<>();
-        map.put("playerBlueImage",   "playerBlue.png");
-        map.put("playerGreenImage",  "playerGreen.png");
-        map.put("playerBrownImage",  "playerBrown.png");
-        map.put("playerPurpleImage", "playerPurple.png");
-        return map;
+        HashMap<String, String> m = new HashMap<>();
+
+        m.put("gridBackgroundColor",   "#0B1220");
+        m.put("toolbarBackgroundColor","#111827");
+        m.put("slotBackgroundColor",   "#1F2937");
+        m.put("slotNumberColor",       "#FBBF24");
+        m.put("slotNumberFontSize",    "14");
+        m.put("cellSpacing",           "3");
+        m.put("logoImage", "logo.png");
+
+        return m;
+    }
+
+
+    private static String capitalizeFirst(String s) {
+        return (s == null || s.isEmpty()) ? "" : Character.toUpperCase(s.charAt(0)) + s.substring(1);
+    }
+
+    private String playerImageForColor(String colorLower) {
+        return "player" + capitalizeFirst(colorLower) + ".png";
     }
 }
