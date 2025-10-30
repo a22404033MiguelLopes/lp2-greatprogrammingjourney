@@ -47,23 +47,30 @@ public class GameManager {
                 java.util.Arrays.asList("blue","green","brown","purple")
         );
 
-        for (int i = 0; i < playerInfo.length; i++) {
-            String[] row = playerInfo[i];
-
+        for (String[] row : playerInfo) {
             if (row == null || row.length < 3) {
                 return false;
             }
 
             int id;
-            try { id = Integer.parseInt(row[0]); }
-            catch (Exception e) { return false; }
-            if (id <= 0) {  return false; }
-            if (!usedIds.add(id)) {  return false; }
+            try {
+                id = Integer.parseInt(row[0]);
+            } catch (Exception e) {
+                return false;
+            }
+            if (id <= 0) {
+                return false;
+            }
+            if (!usedIds.add(id)) {
+                return false;
+            }
 
             String name = (row[1] == null) ? "" : row[1].trim();
-            if (name.isEmpty()) { return false; }
+            if (name.isEmpty()) {
+                return false;
+            }
 
-            java.util.List<String> langs = new java.util.ArrayList<>();
+            List<String> langs = new ArrayList<>();
             String colorRaw;
 
             if (row.length >= 4) {
@@ -83,7 +90,7 @@ public class GameManager {
                 langs.add("Java");
             }
 
-            String color = colorRaw.toLowerCase(java.util.Locale.ROOT);
+            String color = colorRaw.toLowerCase(Locale.ROOT);
             if (!allowed.contains(color)) {
                 return false;
             }
@@ -95,7 +102,7 @@ public class GameManager {
             nameById.put(id, name);
             colorById.put(id, color);
             posById.put(id, 1);
-            langsById.put(id, langs.isEmpty() ? new java.util.ArrayList<>(java.util.Arrays.asList("Java")) : langs);
+            langsById.put(id, langs.isEmpty() ? new ArrayList<>(List.of("Java")) : langs);
             stateById.put(id, "Em Jogo");
         }
 
@@ -134,7 +141,7 @@ public class GameManager {
 
         java.util.List<String> langs = langsById.getOrDefault(id, new java.util.ArrayList<>());
         java.util.List<String> sorted = new java.util.ArrayList<>(langs);
-        java.util.Collections.sort(sorted, String.CASE_INSENSITIVE_ORDER);
+        sorted.sort(String.CASE_INSENSITIVE_ORDER);
         String langsJoined = String.join(";", sorted);
 
         String state = stateById.getOrDefault(id, "Em Jogo");
@@ -149,9 +156,6 @@ public class GameManager {
         };
     }
 
-
-
-
     public String getProgrammerInfoAsStr(int id) {
         if (!nameById.containsKey(id)) {
             return null;
@@ -163,7 +167,7 @@ public class GameManager {
         String estado = stateById.getOrDefault(id, "Em Jogo");
 
         List<String> sorted = new ArrayList<>(langs);
-        Collections.sort(sorted, String.CASE_INSENSITIVE_ORDER);
+        sorted.sort(String.CASE_INSENSITIVE_ORDER);
         String langsJoined = String.join("; ", sorted);
 
         return id + " | " + name + " | " + pos + " | " + langsJoined + " | " + estado;
@@ -285,15 +289,13 @@ public class GameManager {
             }
         }
 
-        Collections.sort(restantes, new Comparator<Integer>() {
-            public int compare(Integer a, Integer b) {
-                int pa = posById.getOrDefault(a, 0);
-                int pb = posById.getOrDefault(b, 0);
-                if (pa != pb) {
-                    return Integer.compare(pb, pa);
-                }
-                return Integer.compare(a, b);
+        restantes.sort((a, b) -> {
+            int pa = posById.getOrDefault(a, 0);
+            int pb = posById.getOrDefault(b, 0);
+            if (pa != pb) {
+                return Integer.compare(pb, pa);
             }
+            return Integer.compare(a, b);
         });
 
         for (Integer id : restantes) {
@@ -311,9 +313,7 @@ public class GameManager {
         JPanel root = new JPanel(new BorderLayout());
         root.setPreferredSize(new Dimension(360, 240));
         root.setBackground(hex("#0B1220"));
-        root.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createMatteBorder(0, 0, 1, 0, hex("#111827")),
-                BorderFactory.createEmptyBorder(16, 16, 16, 16)));
+        root.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, hex("#111827")), BorderFactory.createEmptyBorder(16, 16, 16, 16)));
 
         JLabel title = new JLabel("THE GREAT PROGRAMMING JOURNEY", SwingConstants.CENTER);
         title.setForeground(hex("#FBBF24"));
@@ -341,6 +341,28 @@ public class GameManager {
         return root;
     }
 
+    public HashMap<String, String> customizeBoard() {
+        HashMap<String, String> m = new HashMap<>();
+
+        m.put("gridBackgroundColor",   "#0B1220");
+        m.put("toolbarBackgroundColor","#111827");
+        m.put("slotBackgroundColor",   "#1F2937");
+        m.put("slotNumberColor",       "#FBBF24");
+        m.put("slotNumberFontSize",    "14");
+        m.put("cellSpacing",           "3");
+        m.put("logoImage", "logo.png");
+
+        return m;
+    }
+
+    private String capitalizeFirst(String s) {
+        return (s == null || s.isEmpty()) ? "" : Character.toUpperCase(s.charAt(0)) + s.substring(1);
+    }
+
+    private String playerImageForColor(String colorLower) {
+        return "player" + capitalizeFirst(colorLower) + ".png";
+    }
+
     private JLabel authorLine(String text) {
         JLabel lbl = new JLabel(text);
         lbl.setForeground(hex("#E2E8F0"));
@@ -359,28 +381,5 @@ public class GameManager {
         lbl.setAlignmentX(Component.LEFT_ALIGNMENT);
         lbl.setFont(lbl.getFont().deriveFont(Font.PLAIN, 12f));
         return lbl;
-    }
-
-    public HashMap<String, String> customizeBoard() {
-        HashMap<String, String> m = new HashMap<>();
-
-        m.put("gridBackgroundColor",   "#0B1220");
-        m.put("toolbarBackgroundColor","#111827");
-        m.put("slotBackgroundColor",   "#1F2937");
-        m.put("slotNumberColor",       "#FBBF24");
-        m.put("slotNumberFontSize",    "14");
-        m.put("cellSpacing",           "3");
-        m.put("logoImage", "logo.png");
-
-        return m;
-    }
-
-
-    private static String capitalizeFirst(String s) {
-        return (s == null || s.isEmpty()) ? "" : Character.toUpperCase(s.charAt(0)) + s.substring(1);
-    }
-
-    private String playerImageForColor(String colorLower) {
-        return "player" + capitalizeFirst(colorLower) + ".png";
     }
 }
