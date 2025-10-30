@@ -72,7 +72,9 @@ public class GameManager {
                     String[] parts = langsRaw.split(";");
                     for (String p : parts) {
                         String s = p.trim();
-                        if (!s.isEmpty()) langs.add(s);
+                        if (!s.isEmpty()) {
+                            langs.add(s);
+                        }
                     }
                 }
                 colorRaw = (row[3] == null) ? "" : row[3].trim();
@@ -106,9 +108,15 @@ public class GameManager {
 
 
     public String getImagePng(int position) {
-        if (worldSize <= 0) return null;
-        if (position < 1 || position > worldSize) return null;
-        if (position == worldSize) return "glory.png";
+        if (worldSize <= 0) {
+            return null;
+        }
+        if (position < 1 || position > worldSize) {
+            return null;
+        }
+        if (position == worldSize) {
+            return "glory.png";
+        }
         return null;
     }
 
@@ -156,10 +164,11 @@ public class GameManager {
 
         List<String> sorted = new ArrayList<>(langs);
         Collections.sort(sorted, String.CASE_INSENSITIVE_ORDER);
-        String langsJoined = String.join(";", sorted);
+        String langsJoined = String.join("; ", sorted);
 
         return id + " | " + name + " | " + pos + " | " + langsJoined + " | " + estado;
     }
+
 
 
     public String[] getSlotInfo(int position) {
@@ -188,7 +197,9 @@ public class GameManager {
 
 
     public int getCurrentPlayerID() {
-        if (playerOrder.isEmpty()) return -1;
+        if (playerOrder.isEmpty()) {
+            return -1;
+        }
         return playerOrder.get(currentIdx);
     }
 
@@ -269,14 +280,18 @@ public class GameManager {
 
         ArrayList<Integer> restantes = new ArrayList<>();
         for (Integer id : playerOrder) {
-            if (!id.equals(winnerId)) restantes.add(id);
+            if (!id.equals(winnerId)) {
+                restantes.add(id);
+            }
         }
 
         Collections.sort(restantes, new Comparator<Integer>() {
             public int compare(Integer a, Integer b) {
                 int pa = posById.getOrDefault(a, 0);
                 int pb = posById.getOrDefault(b, 0);
-                if (pa != pb) return Integer.compare(pb, pa);
+                if (pa != pb) {
+                    return Integer.compare(pb, pa);
+                }
                 return Integer.compare(a, b);
             }
         });
