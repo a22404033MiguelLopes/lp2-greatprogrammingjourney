@@ -152,7 +152,9 @@ public class GameManager {
         boolean first = true;
         for (Player p : players.values()) {
             if (p.pos == position) {
-                if (!first) sb.append(",");
+                if (!first) {
+                    sb.append(",");
+                }
                 sb.append(p.id);
                 first = false;
             }
