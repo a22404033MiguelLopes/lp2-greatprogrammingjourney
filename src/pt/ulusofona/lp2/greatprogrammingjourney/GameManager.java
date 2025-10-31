@@ -2,8 +2,11 @@ package pt.ulusofona.lp2.greatprogrammingjourney;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.*;
-import java.util.List;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
 
 public class GameManager {
 
@@ -12,18 +15,12 @@ public class GameManager {
     private int turnCount = 0;
     private Integer winnerId = null;
 
-
-    private final List<Integer> playerOrder = new ArrayList<>();
-    private final Map<Integer, String> nameById = new HashMap<>();
-    private final Map<Integer, String> colorById = new HashMap<>();
-    private final Map<Integer, Integer> posById = new HashMap<>();
-    private final Map<Integer, List<String>> langsById = new HashMap<>();
-    private final Map<Integer, String> stateById = new HashMap<>();
+    private final ArrayList<Integer> playerOrder = new ArrayList<>();
+    private final HashMap<Integer, Player> players = new HashMap<>();
 
     private int currentIdx = 0;
 
     public GameManager() {}
-
 
     public boolean createInitialBoard(String[][] playerInfo, int worldSize) {
         this.turnCount = 0;
@@ -31,61 +28,37 @@ public class GameManager {
         this.initialized = false;
         this.currentIdx = 0;
 
-        if (playerInfo == null || playerInfo.length < 2 || playerInfo.length > 4) {
-            return false;
-        }
-        if (worldSize < 4) {
-            return false;
-        }
+        if (playerInfo == null || playerInfo.length < 2 || playerInfo.length > 4) return false;
+        if (worldSize < 4) return false;
 
         this.worldSize = worldSize;
         playerOrder.clear();
-        nameById.clear();
-        colorById.clear();
-        posById.clear();
-        langsById.clear();
-        stateById.clear();
-        java.util.Set<Integer> usedIds = new java.util.HashSet<>();
-        java.util.Set<String> usedColors = new java.util.HashSet<>();
-        java.util.Set<String> allowed = new java.util.HashSet<>(
-                java.util.Arrays.asList("blue","green","brown","purple")
-        );
+        players.clear();
+
+        java.util.HashSet<Integer> usedIds = new java.util.HashSet<>();
+        java.util.HashSet<String> usedColors = new java.util.HashSet<>();
+        java.util.HashSet<String> allowed = new java.util.HashSet<>(Arrays.asList("blue","green","brown","purple"));
 
         for (String[] row : playerInfo) {
-            if (row == null || row.length < 3) {
-                return false;
-            }
+            if (row == null || row.length < 3) return false;
 
             int id;
-            try {
-                id = Integer.parseInt(row[0]);
-            } catch (Exception e) {
-                return false;
-            }
-            if (id <= 0) {
-                return false;
-            }
-            if (!usedIds.add(id)) {
-                return false;
-            }
+            try { id = Integer.parseInt(row[0]); } catch (Exception e) { return false; }
+            if (id <= 0) return false;
+            if (!usedIds.add(id)) return false;
 
             String name = (row[1] == null) ? "" : row[1].trim();
-            if (name.isEmpty()) {
-                return false;
-            }
+            if (name.isEmpty()) return false;
 
-            List<String> langs = new ArrayList<>();
+            ArrayList<String> langs = new ArrayList<>();
             String colorRaw;
-
             if (row.length >= 4) {
                 String langsRaw = (row[2] == null) ? "" : row[2].trim();
                 if (!langsRaw.isEmpty()) {
                     String[] parts = langsRaw.split(";");
                     for (String p : parts) {
                         String s = p.trim();
-                        if (!s.isEmpty()) {
-                            langs.add(s);
-                        }
+                        if (!s.isEmpty()) langs.add(s);
                     }
                 }
                 colorRaw = (row[3] == null) ? "" : row[3].trim();
@@ -94,39 +67,24 @@ public class GameManager {
                 langs.add("Java");
             }
 
-            String color = colorRaw.toLowerCase(Locale.ROOT);
-            if (!allowed.contains(color)) {
-                return false;
-            }
-            if (!usedColors.add(color)) {
-                return false;
-            }
+            String color = colorRaw.toLowerCase(java.util.Locale.ROOT);
+            if (!allowed.contains(color)) return false;
+            if (!usedColors.add(color)) return false;
 
+            Player p = new Player(id, name, color, langs);
+            players.put(id, p);
             playerOrder.add(id);
-            nameById.put(id, name);
-            colorById.put(id, color);
-            posById.put(id, 1);
-            langsById.put(id, langs.isEmpty() ? new ArrayList<>(List.of("Java")) : langs);
-            stateById.put(id, "Em Jogo");
         }
 
         Collections.sort(playerOrder);
-        currentIdx = 0;
         initialized = true;
         return true;
     }
 
-
     public String getImagePng(int position) {
-        if (worldSize <= 0) {
-            return null;
-        }
-        if (position < 1 || position > worldSize) {
-            return null;
-        }
-        if (position == worldSize) {
-            return "glory.png";
-        }
+        if (worldSize <= 0) return null;
+        if (position < 1 || position > worldSize) return null;
+        if (position == worldSize) return "glory.png";
         return null;
     }
 
@@ -134,115 +92,73 @@ public class GameManager {
         if (!initialized) {
             return new String[]{ String.valueOf(id), "", "1", "Blue", "Em Jogo" };
         }
-        if (!nameById.containsKey(id)) {
-            return null;
-        }
+        Player p = players.get(id);
+        if (p == null) return null;
 
-        String name = nameById.get(id);
-        int pos = posById.getOrDefault(id, 1);
-        String colorCap = capitalizeFirst(colorById.getOrDefault(id, "blue"));
-
-        java.util.List<String> langs = langsById.getOrDefault(id, new java.util.ArrayList<>());
-        java.util.List<String> sorted = new java.util.ArrayList<>(langs);
-        sorted.sort(String.CASE_INSENSITIVE_ORDER);
-        String langsJoined = String.join(";", sorted);
-
-        String state = stateById.getOrDefault(id, "Em Jogo");
-
+        String colorCap = cap(p.colorLower);
         return new String[]{
-                String.valueOf(id),
-                name,
-                String.valueOf(pos),
+                String.valueOf(p.id),
+                p.name,
+                String.valueOf(p.pos),
                 colorCap,
-                state,
-                langsJoined
+                p.state
         };
     }
 
     public String getProgrammerInfoAsStr(int id) {
-        if (!nameById.containsKey(id)) {
-            return null;
-        }
+        Player p = players.get(id);
+        if (p == null) return null;
 
-        String name = nameById.get(id);
-        int pos = posById.getOrDefault(id, 0);
-        List<String> langs = langsById.getOrDefault(id, new ArrayList<>());
-        String estado = stateById.getOrDefault(id, "Em Jogo");
-
-        List<String> sorted = new ArrayList<>(langs);
+        ArrayList<String> sorted = new ArrayList<>(p.langs);
         sorted.sort(String.CASE_INSENSITIVE_ORDER);
         String langsJoined = String.join("; ", sorted);
 
-        return id + " | " + name + " | " + pos + " | " + langsJoined + " | " + estado;
+        return p.id + " | " + p.name + " | " + p.pos + " | " + langsJoined + " | " + p.state;
     }
-
-
 
     public String[] getSlotInfo(int position) {
-        if (position < 1 || position > worldSize) {
-            return null;
-        }
-
-        List<Integer> idsNaCasa = new ArrayList<>();
-        for (Map.Entry<Integer, Integer> entry : posById.entrySet()) {
-            if (entry.getValue() == position) {
-                idsNaCasa.add(entry.getKey());
-            }
-        }
+        if (position < 1 || position > worldSize) return null;
 
         StringBuilder sb = new StringBuilder();
-        for (int i = 0; i < idsNaCasa.size(); i++) {
-            sb.append(idsNaCasa.get(i));
-            if (i < idsNaCasa.size() - 1) {
-                sb.append(",");
+        boolean first = true;
+        for (Player p : players.values()) {
+            if (p.pos == position) {
+                if (!first) sb.append(",");
+                sb.append(p.id);
+                first = false;
             }
         }
-
-        String resultado = sb.toString();
-        return new String[]{ resultado };
+        return new String[]{ sb.toString() };
     }
 
-
     public int getCurrentPlayerID() {
-        if (playerOrder.isEmpty()) {
-            return -1;
-        }
+        if (playerOrder.isEmpty()) return -1;
         return playerOrder.get(currentIdx);
     }
 
-    private void advanceTurn() {
-        if (!playerOrder.isEmpty()) {
-            currentIdx = (currentIdx + 1) % playerOrder.size();
-        }
-    }
-
     public boolean moveCurrentPlayer(int nrSpaces) {
-        if (nrSpaces < 1 || nrSpaces > 6) {
-            return false;
-        }
-        if (playerOrder.isEmpty() || worldSize <= 0) {
-            return false;
-        }
+        if (nrSpaces < 1 || nrSpaces > 6) return false;
+        if (playerOrder.isEmpty() || worldSize <= 0) return false;
 
         int currentId = playerOrder.get(currentIdx);
-        int posAtual = posById.getOrDefault(currentId, 1);
-        int destino = posAtual + nrSpaces;
+        Player p = players.get(currentId);
+        if (p == null) return false;
+
+        int destino = p.pos + nrSpaces;
 
         if (destino > worldSize) {
             int excesso = destino - worldSize;
             destino = worldSize - excesso;
-            if (destino < 1) {
-                destino = 1;
-            }
+            if (destino < 1) destino = 1;
         }
 
-        posById.put(currentId, destino);
+        p.pos = destino;
 
-        boolean ganhouAgora = (destino == worldSize && winnerId == null);
+        boolean ganhouAgora = (p.pos == worldSize && winnerId == null);
         if (ganhouAgora) {
-            winnerId = currentId;
+            winnerId = p.id;
+            p.state = "Venceu";
         }
-
         turnCount++;
 
         if (!ganhouAgora) {
@@ -252,27 +168,17 @@ public class GameManager {
         return true;
     }
 
-
-
     public boolean gameIsOver() {
-        if (worldSize <= 0 || posById.isEmpty()) {
-            return false;
-        }
-
-        for (int pos : posById.values()) {
-            if (pos == worldSize) {
-                return true;
-            }
+        if (worldSize <= 0 || players.isEmpty()) return false;
+        for (Player p : players.values()) {
+            if (p.pos == worldSize) return true;
         }
         return false;
     }
 
     public ArrayList<String> getGameResults() {
         ArrayList<String> out = new ArrayList<>();
-
-        if (!gameIsOver() || winnerId == null) {
-            return out;
-        }
+        if (!gameIsOver() || winnerId == null) return out;
 
         out.add("THE GREAT PROGRAMMING JOURNEY");
         out.add("");
@@ -280,30 +186,24 @@ public class GameManager {
         out.add(String.valueOf(turnCount + 1));
         out.add("");
         out.add("VENCEDOR");
-        out.add(nameById.getOrDefault(winnerId, String.valueOf(winnerId)));
+        out.add(players.get(winnerId).name);
         out.add("");
         out.add("RESTANTES");
 
         ArrayList<Integer> restantes = new ArrayList<>();
-        for (Integer id : playerOrder) {
-            if (!id.equals(winnerId)) {
-                restantes.add(id);
-            }
+        for (int id : playerOrder) {
+            if (winnerId != null && id != winnerId) restantes.add(id);
         }
-
         restantes.sort((a, b) -> {
-            int pa = posById.getOrDefault(a, 0);
-            int pb = posById.getOrDefault(b, 0);
-            if (pa != pb) {
-                return Integer.compare(pb, pa);
-            }
+            int pa = players.get(a).pos;
+            int pb = players.get(b).pos;
+            if (pa != pb) return Integer.compare(pb, pa);
             return Integer.compare(a, b);
         });
 
         for (Integer id : restantes) {
-            int pos = posById.getOrDefault(id, 0);
-            String nome = nameById.getOrDefault(id, String.valueOf(id));
-            out.add(nome + " " + pos);
+            Player p = players.get(id);
+            out.add(p.name + " " + p.pos);
         }
 
         return out;
@@ -343,19 +243,23 @@ public class GameManager {
 
     public HashMap<String, String> customizeBoard() {
         HashMap<String, String> m = new HashMap<>();
-
         m.put("gridBackgroundColor",   "#0B1220");
         m.put("toolbarBackgroundColor","#111827");
         m.put("slotBackgroundColor",   "#1F2937");
         m.put("slotNumberColor",       "#FBBF24");
         m.put("slotNumberFontSize",    "14");
         m.put("cellSpacing",           "3");
-        m.put("logoImage", "logo.png");
-
+        m.put("logoImage",             "logo.png");
         return m;
     }
 
-    private String capitalizeFirst(String s) {
+    private void advanceTurn() {
+        if (!playerOrder.isEmpty()) {
+            currentIdx = (currentIdx + 1) % playerOrder.size();
+        }
+    }
+
+    private String cap(String s) {
         return (s == null || s.isEmpty()) ? "" : Character.toUpperCase(s.charAt(0)) + s.substring(1);
     }
 
@@ -367,7 +271,7 @@ public class GameManager {
         return lbl;
     }
 
-    private static Color hex(String rgb) {
+    private Color hex(String rgb) {
         return Color.decode(rgb);
     }
 }
