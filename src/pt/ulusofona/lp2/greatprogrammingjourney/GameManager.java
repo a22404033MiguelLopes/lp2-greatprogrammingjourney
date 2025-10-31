@@ -217,8 +217,12 @@ public class GameManager {
     }
 
     public boolean moveCurrentPlayer(int nrSpaces) {
-        if (nrSpaces < 1 || nrSpaces > 6) return false;
-        if (playerOrder.isEmpty() || worldSize <= 0) return false;
+        if (nrSpaces < 1 || nrSpaces > 6) {
+            return false;
+        }
+        if (playerOrder.isEmpty() || worldSize <= 0) {
+            return false;
+        }
 
         int currentId = playerOrder.get(currentIdx);
         int posAtual = posById.getOrDefault(currentId, 1);
@@ -227,7 +231,9 @@ public class GameManager {
         if (destino > worldSize) {
             int excesso = destino - worldSize;
             destino = worldSize - excesso;
-            if (destino < 1) destino = 1;
+            if (destino < 1) {
+                destino = 1;
+            }
         }
 
         posById.put(currentId, destino);
@@ -280,13 +286,17 @@ public class GameManager {
 
         ArrayList<Integer> restantes = new ArrayList<>();
         for (Integer id : playerOrder) {
-            if (!id.equals(winnerId)) restantes.add(id);
+            if (!id.equals(winnerId)) {
+                restantes.add(id);
+            }
         }
 
         restantes.sort((a, b) -> {
             int pa = posById.getOrDefault(a, 0);
             int pb = posById.getOrDefault(b, 0);
-            if (pa != pb) return Integer.compare(pb, pa);
+            if (pa != pb) {
+                return Integer.compare(pb, pa);
+            }
             return Integer.compare(a, b);
         });
 
@@ -298,8 +308,6 @@ public class GameManager {
 
         return out;
     }
-
-
 
     public JPanel getAuthorsPanel() {
         JPanel root = new JPanel(new BorderLayout());
