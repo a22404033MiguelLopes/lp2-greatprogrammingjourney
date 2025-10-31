@@ -26,7 +26,11 @@ public class GameManager {
 
 
     public boolean createInitialBoard(String[][] playerInfo, int worldSize) {
-        worldSize = 10;
+        this.turnCount = 0;
+        this.winnerId = null;
+        this.initialized = false;
+        this.currentIdx = 0;
+
         if (playerInfo == null || playerInfo.length < 2 || playerInfo.length > 4) {
             return false;
         }
@@ -41,7 +45,6 @@ public class GameManager {
         posById.clear();
         langsById.clear();
         stateById.clear();
-
         java.util.Set<Integer> usedIds = new java.util.HashSet<>();
         java.util.Set<String> usedColors = new java.util.HashSet<>();
         java.util.Set<String> allowed = new java.util.HashSet<>(
@@ -107,10 +110,9 @@ public class GameManager {
             stateById.put(id, "Em Jogo");
         }
 
-        java.util.Collections.sort(playerOrder);
+        Collections.sort(playerOrder);
         currentIdx = 0;
         initialized = true;
-
         return true;
     }
 
@@ -215,37 +217,35 @@ public class GameManager {
     }
 
     public boolean moveCurrentPlayer(int nrSpaces) {
-        if (nrSpaces < 1 || nrSpaces > 6) {
-            return false;
-        }
-        if (playerOrder.isEmpty() || worldSize <= 0) {
-            return false;
-        }
+        if (nrSpaces < 1 || nrSpaces > 6) return false;
+        if (playerOrder.isEmpty() || worldSize <= 0) return false;
 
         int currentId = playerOrder.get(currentIdx);
-        int posAtual = posById.getOrDefault(currentId, 0);
-
+        int posAtual = posById.getOrDefault(currentId, 1);
         int destino = posAtual + nrSpaces;
 
         if (destino > worldSize) {
             int excesso = destino - worldSize;
             destino = worldSize - excesso;
-            if (destino < 1) {
-                destino = 1;
-            }
+            if (destino < 1) destino = 1;
         }
 
         posById.put(currentId, destino);
 
-        if (destino == worldSize && winnerId == null) {
+        boolean ganhouAgora = (destino == worldSize && winnerId == null);
+        if (ganhouAgora) {
             winnerId = currentId;
         }
 
         turnCount++;
-        advanceTurn();
-        return true;
 
+        if (!ganhouAgora) {
+            advanceTurn();
+        }
+
+        return true;
     }
+
 
 
     public boolean gameIsOver() {
