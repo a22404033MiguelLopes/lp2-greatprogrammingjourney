@@ -26,6 +26,7 @@ public class GameManager {
 
 
     public boolean createInitialBoard(String[][] playerInfo, int worldSize) {
+        worldSize = 10;
         if (playerInfo == null || playerInfo.length < 2 || playerInfo.length > 4) {
             return false;
         }
@@ -267,34 +268,25 @@ public class GameManager {
             return out;
         }
 
-        final String SEP = "────────────────────────────────────────";
-
-        out.add("THE GREAT PROGRAMMING JOURNEY — RESULTADOS");
-        out.add(SEP);
+        out.add("THE GREAT PROGRAMMING JOURNEY");
+        out.add("");
         out.add("NR. DE TURNOS");
         out.add(String.valueOf(turnCount));
         out.add("");
         out.add("VENCEDOR");
-        String vencedorNome = nameById.getOrDefault(winnerId, String.valueOf(winnerId));
-        int vencedorPos = posById.getOrDefault(winnerId, worldSize);
-        out.add("🏆 " + vencedorNome + " — " + vencedorPos);
+        out.add(nameById.getOrDefault(winnerId, String.valueOf(winnerId)));
         out.add("");
         out.add("RESTANTES");
-        out.add(SEP);
 
         ArrayList<Integer> restantes = new ArrayList<>();
         for (Integer id : playerOrder) {
-            if (!id.equals(winnerId)) {
-                restantes.add(id);
-            }
+            if (!id.equals(winnerId)) restantes.add(id);
         }
 
         restantes.sort((a, b) -> {
             int pa = posById.getOrDefault(a, 0);
             int pb = posById.getOrDefault(b, 0);
-            if (pa != pb) {
-                return Integer.compare(pb, pa);
-            }
+            if (pa != pb) return Integer.compare(pb, pa);
             return Integer.compare(a, b);
         });
 
@@ -304,9 +296,9 @@ public class GameManager {
             out.add(nome + " " + pos);
         }
 
-        out.add(SEP);
         return out;
     }
+
 
 
     public JPanel getAuthorsPanel() {
@@ -359,10 +351,6 @@ public class GameManager {
         return (s == null || s.isEmpty()) ? "" : Character.toUpperCase(s.charAt(0)) + s.substring(1);
     }
 
-    private String playerImageForColor(String colorLower) {
-        return "player" + capitalizeFirst(colorLower) + ".png";
-    }
-
     private JLabel authorLine(String text) {
         JLabel lbl = new JLabel(text);
         lbl.setForeground(hex("#E2E8F0"));
@@ -373,13 +361,5 @@ public class GameManager {
 
     private static Color hex(String rgb) {
         return Color.decode(rgb);
-    }
-
-
-    private JLabel makeLine(String text) {
-        JLabel lbl = new JLabel(text);
-        lbl.setAlignmentX(Component.LEFT_ALIGNMENT);
-        lbl.setFont(lbl.getFont().deriveFont(Font.PLAIN, 12f));
-        return lbl;
     }
 }
