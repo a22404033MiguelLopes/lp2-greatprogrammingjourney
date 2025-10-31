@@ -271,7 +271,7 @@ public class GameManager {
         out.add("THE GREAT PROGRAMMING JOURNEY");
         out.add("");
         out.add("NR. DE TURNOS");
-        out.add(String.valueOf(turnCount));
+        out.add(String.valueOf(turnCount + 1));
         out.add("");
         out.add("VENCEDOR");
         out.add(nameById.getOrDefault(winnerId, String.valueOf(winnerId)));
